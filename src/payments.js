@@ -4,7 +4,7 @@ function calculatePaymentTotal(items) {
 
 function createPayment({ amount, currency = 'KES' }) {
   if (!amount || amount <= 0) {
-    throw new Error('Payment amount must be greater than 0');
+    throw new Error('Payment amount must be greater than zero');
   }
 
   return {
