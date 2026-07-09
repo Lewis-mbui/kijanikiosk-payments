@@ -25,3 +25,7 @@ test('rejects invalid payment amount', () => {
     'Payment amount must be greater than zero'
   );
 });
+
+test('ci-pipeline-verification: deliberate failure', () => {
+  expect(true).toBe(false);
+});
