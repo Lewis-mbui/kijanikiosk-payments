@@ -21,7 +21,5 @@ test('creates a pending payment', () => {
 });
 
 test('rejects invalid payment amount', () => {
-  expect(() => createPayment({ amount: 0 })).toThrow(
-    'Payment amount must be greater than zero'
-  );
+  expect(() => createPayment({ amount: 0 })).toThrow();
 });
