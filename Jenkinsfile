@@ -80,12 +80,15 @@ pipeline {
             # including when npm publish fails
             trap 'rm -f .npmrc' EXIT
 
+            # Prevent the transformed Base64 credential from being printed.
+            set +x
+
             # Generate base64 token from the injected credentials
             NEXUS_TOKEN=$(echo -n "${NEXUS_USER}:${NEXUS_PASS}" | base64)
 
             cat > .npmrc <<NPMRC
 registry=${NEXUS_URL}/
-//nexus:8081/repository/npm-kijanikiosk/:_authToken=${NEXUS_TOKEN}
+//nexus:8081/repository/npm-kijanikiosk/:_auth=${NEXUS_TOKEN}
 NPMRC
 
             npm version "${ARTIFACT_VERSION}" --no-git-tag-version
