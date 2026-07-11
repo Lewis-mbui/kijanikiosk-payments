@@ -10,8 +10,9 @@ pipeline {
     GIT_SHORT   = sh(script: 'git rev-parse --short HEAD',
                     returnStdout: true).trim()
     ARTIFACT_VERSION = "${PKG_VERSION}-${GIT_SHORT}"
-    // Result: "1.0.0-a3f2c8b"
-    NEXUS_IP = "localhost"
+
+    // Jenkins reaches Nexus through the shared Docker network.
+    NEXUS_URL = 'http://nexus:8081/repository/npm-kijanikiosk'
   }
 
   options {
@@ -59,30 +60,51 @@ pipeline {
       steps {
         echo "Archiving build artifact for ${APP_NAME} build ${BUILD_NUMBER}..."
         archiveArtifacts artifacts: "${BUILD_DIR}/**", fingerprint: true, onlyIfSuccessful: true
-        echo "Artifact URL: ${BUILD_URL}artifact/"
+        echo "Jenkins artifact URL: ${BUILD_URL}artifact/"
       }
     }
 
-    stage('Credential Test') {
+    stage('Publish') {
       steps {
-          withCredentials([usernamePassword(
-            credentialsId: 'nexus-credentials',
-            usernameVariable: 'NEXUS_USER',
-            passwordVariable: 'NEXUS_PASS'
-          )]) {
-            sh 'echo "User: ${NEXUS_USER} Pass: ${NEXUS_PASS}"'
-          }
+        echo "Publishing ${APP_NAME} version ${ARTIFACT_VERSION} to Nexus..."
+
+        withCredentials([usernamePassword(
+          credentialsId: 'nexus-credentials',
+          usernameVariable: 'NEXUS_USER',
+          passwordVariable: 'NEXUS_PASS'
+        )]) {
+          sh '''
+            set -e
+
+            # Always remove temporary authentication
+            # including when npm publish fails
+            trap 'rm -f .npmrc' EXIT
+
+            # Generate base64 token from the injected credentials
+            NEXUS_TOKEN=$(echo -n "${NEXUS_USER}:${NEXUS_PASS}" | base64)
+
+            cat > .npmrc <<NPMRC
+registry=${NEXUS_URL}/
+//nexus:8081/repository/npm-kijanikiosk/:_authToken=${NEXUS_TOKEN}
+NPMRC
+
+            #publish the package
+            npm publish
+          '''
+        }
       }
     }
   }
 
   post {
     success {
-      echo "SUCCESS: ${APP_NAME} build #${BUILD_NUMBER} passed. Artifact URL: ${BUILD_URL}artifact/"
+      echo "SUCCESS: Published ${APP_NAME} version ${ARTIFACT_VERSION} to Nexus."
+      echo "Nexus artifact URL: ${NEXUS_URL}/${APP_NAME}/-/${APP_NAME}-${ARTIFACT_VERSION}.tgz"
     }
 
     failure {
-      echo "FAILURE: ${APP_NAME} build #${BUILD_NUMBER} failed. Check the console log for the failed stage."
+      echo "FAILURE: ${APP_NAME} pipeline failed at build #${BUILD_NUMBER}."
+      echo "Check the console log: ${BUILD_URL}"
     }
 
     always {
