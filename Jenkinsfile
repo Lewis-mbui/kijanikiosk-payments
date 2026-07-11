@@ -5,6 +5,13 @@ pipeline {
     NODE_ENV  = 'test'
     BUILD_DIR = 'dist'
     APP_NAME  = 'kijanikiosk-payments'
+    PKG_VERSION = sh(script: "node -p \"require('./package.json').version\"",
+                    returnStdout: true).trim()
+    GIT_SHORT   = sh(script: 'git rev-parse --short HEAD',
+                    returnStdout: true).trim()
+    ARTIFACT_VERSION = "${PKG_VERSION}-${GIT_SHORT}"
+    // Result: "1.0.0-a3f2c8b"
+    NEXUS_IP = "localhost"
   }
 
   options {
@@ -53,6 +60,18 @@ pipeline {
         echo "Archiving build artifact for ${APP_NAME} build ${BUILD_NUMBER}..."
         archiveArtifacts artifacts: "${BUILD_DIR}/**", fingerprint: true, onlyIfSuccessful: true
         echo "Artifact URL: ${BUILD_URL}artifact/"
+      }
+    }
+
+    stage('Credential Test') {
+      steps {
+          withCredentials([usernamePassword(
+            credentialsId: 'nexus-credentials',
+            usernameVariable: 'NEXUS_USER',
+            passwordVariable: 'NEXUS_PASS'
+          )]) {
+            sh 'echo "User: ${NEXUS_USER} Pass: ${NEXUS_PASS}"'
+          }
       }
     }
   }
