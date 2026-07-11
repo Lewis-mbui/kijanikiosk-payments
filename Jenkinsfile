@@ -88,6 +88,8 @@ registry=${NEXUS_URL}/
 //nexus:8081/repository/npm-kijanikiosk/:_authToken=${NEXUS_TOKEN}
 NPMRC
 
+            npm version "${ARTIFACT_VERSION}" --no-git-tag-version
+
             #publish the package
             npm publish
           '''
