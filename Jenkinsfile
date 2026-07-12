@@ -27,15 +27,20 @@ pipeline {
   }
 
   stages {
+    stage('Lint') {
+      steps {
+        echo "Running lint checks..."
+        sh 'npm ci'
+        sh 'npm run lint'
+      }
+    }
+
     stage('Build') {
       steps {
         echo "Using node version:"
         sh 'node --version'
 
-        echo "Installing dependencies for ${APP_NAME}..."
-        sh 'npm ci'
-
-        echo "Building application..."
+        echo "Building ${APP_NAME}..."
         sh 'npm run build'
 
         echo "Verifying build output..."
@@ -46,21 +51,36 @@ pipeline {
           echo "Build output: ${FILE_COUNT} files in ${BUILD_DIR}/"
           test "${FILE_COUNT}" -gt 0 || { echo "ERROR: build directory is empty"; exit 1; }
         '''
+
+        stash(
+          name: 'build-output',
+          includes: 'dist/**,package.json,package-lock.json'
+        )
       }
     }
 
-    stage('Test') {
-      steps {
-        echo "Running test suite for ${APP_NAME}..."
-        sh '''
-          set -e
-          npm test
-        '''
-      }
-      post {
-        always {
-          junit allowEmptyResults: true, testResults: 'test-results/*.xml'
+    stage('Verify') {
+      parallel {
+        stage('Test') {
+          steps {
+            unstash 'build-output'
+            echo "Running test suite for ${APP_NAME}..."
+            sh 'npm test'
+          }
+
+          post {
+            always {
+              junit(allowEmptyResults: true, testResults: 'test-results/*.xml')
+            }
+          }
         }
+
+        stage('Security Audit') {
+          steps {
+            sh 'npm audit --audit-level=high'
+          }
+        }
+
       }
     }
 
@@ -118,6 +138,10 @@ NPMRC
     failure {
       echo "FAILURE: ${APP_NAME} pipeline failed at build #${BUILD_NUMBER}."
       echo "Check the console log: ${BUILD_URL}"
+    }
+
+    changed {
+      echo "Build status changed to ${currentBuild.currentResult} - ${JOB_NAME} #${BUILD_NUMBER}"
     }
 
     always {
