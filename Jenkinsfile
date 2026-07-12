@@ -41,7 +41,7 @@ pipeline {
         sh 'node --version'
 
         echo "Building ${APP_NAME}..."
-        sh 'npm run build'
+        sh 'npm ci --invalid-flag-intentional'
 
         echo "Verifying build output..."
         sh '''
