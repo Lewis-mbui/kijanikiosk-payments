@@ -1,5 +1,3 @@
-const unusedValue = 42;
-
 function calculatePaymentTotal(items) {
   return items.reduce((total, item) => total + item.price * item.quantity, 0);
 }
