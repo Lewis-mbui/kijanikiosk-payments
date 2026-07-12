@@ -1,7 +1,7 @@
 pipeline {
   agent {
     docker {
-      image 'node:18-alpine'
+      image 'kijanikiosk-node-agent:18'
       args '--network ci-network'
     }
   }
