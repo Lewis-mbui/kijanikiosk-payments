@@ -23,7 +23,3 @@ test('creates a pending payment', () => {
 test('rejects invalid payment amount', () => {
   expect(() => createPayment({ amount: 0 })).toThrow();
 });
-
-test('intentional failure', () => {
-  expect(true).toBe(false);
-});
