@@ -97,7 +97,7 @@ pipeline {
         echo "Publishing ${APP_NAME} version ${ARTIFACT_VERSION} to Nexus..."
 
         withCredentials([usernamePassword(
-          credentialsId: 'wrong-id',
+          credentialsId: 'nexus-credentials',
           usernameVariable: 'NEXUS_USER',
           passwordVariable: 'NEXUS_PASS'
         )]) {
