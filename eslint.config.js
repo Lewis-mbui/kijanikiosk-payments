@@ -10,6 +10,8 @@ module.exports = [
       globals: {
         module: 'readonly',
         require: 'readonly',
+        process: 'readonly',
+        console: 'readonly',
         test: 'readonly',
         expect: 'readonly'
       }
