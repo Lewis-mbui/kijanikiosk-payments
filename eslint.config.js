@@ -1,20 +1,29 @@
 const js = require('@eslint/js');
+const tseslint = require('typescript-eslint');
 
-module.exports = [
-  js.configs.recommended,
+module.exports = tseslint.config(
   {
-    files: ['src/**/*.js', 'tests/**/*.js'],
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'test-results/**'
+    ]
+  },
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  {
+    files: ['src/**/*.ts', 'tests/**/*.ts'],
     languageOptions: {
-      ecmaVersion: 2022,
-      sourceType: 'commonjs',
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: 'module'
+      },
       globals: {
-        module: 'readonly',
-        require: 'readonly',
-        process: 'readonly',
         console: 'readonly',
+        process: 'readonly',
         test: 'readonly',
         expect: 'readonly'
       }
     }
   }
-];
+);

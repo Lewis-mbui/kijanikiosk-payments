@@ -1,7 +1,7 @@
-const {
+import {
   calculatePaymentTotal,
   createPayment
-} = require('../src/payments');
+} from '../src/payments';
 
 test('calculates payment total', () => {
   const total = calculatePaymentTotal([
@@ -21,5 +21,7 @@ test('creates a pending payment', () => {
 });
 
 test('rejects invalid payment amount', () => {
-  expect(() => createPayment({ amount: 0 })).toThrow();
+  expect(() => createPayment({ amount: 0 })).toThrow(
+    'Payment amount must be greater than 0'
+  );
 });
