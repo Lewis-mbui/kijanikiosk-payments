@@ -1,0 +1,16 @@
+
+=== Production image ===
+IMAGE                                   ID             DISK USAGE   CONTENT SIZE   EXTRA
+kijanikiosk/kk-payments:capstone-prod   c1046afaf034        195MB         47.1MB        
+
+=== Runtime user ===
+kijani
+
+=== TypeScript compiler check ===
+PASS: tsc is not installed in the production image
+
+=== Container health ===
+status=running health=healthy
+
+=== Health endpoint ===
+{"status":"ok","service":"kk-payments","version":"capstone-prod","port":3001}
