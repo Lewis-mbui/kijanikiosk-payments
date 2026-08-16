@@ -13,10 +13,25 @@ import { log } from "./logger";
 
 import { publishReceiptEvent } from "./receiptPublisher";
 
+import { httpRequestsTotal, register } from "./metrics";
+
 export function createApp() {
   const app = express();
 
   app.use(correlationMiddleware);
+  app.use((req, res, next) => {
+    res.on("finish", () => {
+      if (req.path !== "/metrics") {
+        httpRequestsTotal.inc({
+          method: req.method,
+          route: req.path,
+          status_code: String(res.statusCode),
+        });
+      }
+    });
+
+    next();
+  });
   app.use(express.json());
 
   app.get("/health", (req: CorrelatedRequest, res: Response) => {
@@ -27,6 +42,11 @@ export function createApp() {
       port: Number(process.env.PORT) || 3001,
       correlationId: req.correlationId,
     });
+  });
+
+  app.get("/metrics", async (_req, res) => {
+    res.setHeader("Content-Type", register.contentType);
+    res.end(await register.metrics());
   });
 
   app.post("/payments", async (req: CorrelatedRequest, res: Response) => {
