@@ -11,6 +11,8 @@ import { correlationMiddleware, type CorrelatedRequest } from "./correlation";
 
 import { log } from "./logger";
 
+import { publishReceiptEvent } from "./receiptPublisher";
+
 export function createApp() {
   const app = express();
 
@@ -27,7 +29,7 @@ export function createApp() {
     });
   });
 
-  app.post("/payments", (req: CorrelatedRequest, res: Response) => {
+  app.post("/payments", async (req: CorrelatedRequest, res: Response) => {
     try {
       const input = req.body as CreatePaymentInput;
 
@@ -39,6 +41,18 @@ export function createApp() {
         amount: payment.amount,
         currency: payment.currency,
         status: payment.status,
+      });
+
+      if (!req.correlationId) {
+        throw new Error("Correlation ID was not assigned");
+      }
+
+      await publishReceiptEvent({
+        paymentId: payment.id,
+        amount: payment.amount,
+        currency: payment.currency,
+        correlationId: req.correlationId,
+        createdAt: new Date().toISOString(),
       });
 
       res.status(201).json({
